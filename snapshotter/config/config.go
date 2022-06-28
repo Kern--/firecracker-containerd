@@ -14,10 +14,15 @@
 package config
 
 import (
+	"errors"
 	"io"
 	"os"
 
 	"github.com/pelletier/go-toml"
+)
+
+const (
+	DefaultConfigPath = "/etc/demux-snapshotter/config.toml"
 )
 
 // Config contains metadata necessary to forward snapshotter requests
@@ -50,8 +55,8 @@ type address struct {
 }
 
 type resolver struct {
-	Type    string `toml:"type"`
-	Address string `toml:"address"`
+	Type    string `toml:"type" default:"http"`
+	Address string `toml:"address" default:"http://127.0.0.1:10001"`
 }
 
 type debug struct {
@@ -69,6 +74,15 @@ type metrics struct {
 func Load(filePath string) (Config, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
+		// If we're loading from the default path, but the default config file doesn't exist,
+		// fallback to a completely default config
+		if filePath == DefaultConfigPath && errors.Is(err, os.ErrNotExist) {
+			var config Config
+			// Unmarshal empty slice so that go-toml will populate default values
+			// from the struct annotation.
+			toml.Unmarshal([]byte{}, &config)
+			return config, nil
+		}
 		return Config{}, err
 	}
 	defer file.Close()

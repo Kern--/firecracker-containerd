@@ -25,7 +25,7 @@ import (
 
 func main() {
 	var filepath string
-	flag.StringVar(&filepath, "config", "/etc/demux-snapshotter/config.toml", "Configuration filepath")
+	flag.StringVar(&filepath, "config", config.DefaultConfigPath, "Configuration filepath")
 
 	if !flag.Parsed() {
 		flag.Parse()
